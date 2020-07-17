@@ -1,12 +1,22 @@
 package com.barbalho.rocha;
 
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.concurrent.ExecutionException;
 
+import org.apache.mina.api.IoFuture;
+import org.apache.mina.api.IoSession;
+import org.apache.mina.transport.nio.NioTcpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class TCPClient {
 	static final private Logger LOG = LoggerFactory.getLogger(TCPClient.class);
+
+	public static final String IP_SERVER = "localhost";
+	public static final int PORT_SERVER = 9999;
 
 	public static final int INIT = 0;
 	public static final int BYTES = 1;
@@ -25,23 +35,23 @@ public class TCPClient {
 		byte[] array = { 0x09, 0x01, 0x31, 0x32, 0x33, 0x34 };
 		System.out.println(String.format("0x%02X", CRC8.calc(array, 6)));
 	}
-	
+
 	public static String hexToASCII(byte[] array) {
-		return new String(array);
+		return new String(array, StandardCharsets.UTF_8);
 	}
-	
+
 	public static byte[] ASCIIToHex(String ascii) {
 		return ascii.getBytes();
 	}
 
 	public static void teste() {
-		byte[] array = { 0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x20, 0x57, 0x6F, 0x72, 0x6C, 0x64};
+		byte[] array = { 0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x20, 0x57, 0x6F, 0x72, 0x6C, 0x64 };
 		String s = "Hello World";
 		System.out.println(hexToASCII(array));
 		System.out.println(hexToASCII(ASCIIToHex(s)));
 	}
 
-	public byte[] createMessage(String textMessage, byte frame) {
+	public static byte[] createMessage(String textMessage, byte frame) {
 
 		byte[] byteMessage = new byte[textMessage.length() + 5];
 
@@ -57,43 +67,43 @@ public class TCPClient {
 
 		byte[] subMessage = Arrays.copyOfRange(byteMessage, 3, index);
 
-		byteMessage[index++] = CRC8.calc(subMessage, byteMessage.length);
+		byteMessage[index++] = CRC8.calc(subMessage, subMessage.length);
 		byteMessage[index++] = END_VALUE;
 
 		return byteMessage;
 	}
 
-	@SuppressWarnings("rawtypes")
-	public static void main(String[] args) {
-		
-		teste();
+	public static void tcpSend(byte[] message) {
 
-//		LOG.info("starting echo client");
-//		final NioTcpClient client = new NioTcpClient();
-//		client.setIoHandler(new ClientHandler());
-//
-//		try {
-//
-//			IoFuture<IoSession> future = client.connect(new InetSocketAddress("localhost", 9999));
-//
-//			try {
-//				IoSession session = future.get();
-//				LOG.info("session connected : {" + session + "}");
-//
-//				HashMap<String, String> m = new HashMap<String, String>();
-//				m.put("1", "1");
-//
-//				// encode
-//				JavaNativeMessageEncoder<HashMap> in = new JavaNativeMessageEncoder<HashMap>();
-//				ByteBuffer encode = in.encode(m);
-//
-//				session.write(encode);
-//
-//			} catch (ExecutionException e) {
-//				LOG.error("cannot connect : ", e);
-//			}
-//		} catch (InterruptedException e) {
-//			e.printStackTrace();
-//		}
+		final NioTcpClient client = new NioTcpClient();
+		client.setIoHandler(new ClientHandler());
+
+		try {
+
+			IoFuture<IoSession> future = client.connect(new InetSocketAddress(IP_SERVER, PORT_SERVER));
+
+			try {
+				IoSession session = future.get();
+				LOG.info("session connected : {" + session + "}");
+
+				ByteBuffer encode = ByteBuffer.wrap(message);
+
+				session.write(encode);
+
+			} catch (ExecutionException e) {
+				LOG.error("cannot connect : ", e);
+			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public static void sendTextMessage(String message) {
+
+		tcpSend(createMessage(message, TEXT_FRAME));
+	}
+
+	public static void main(String[] args) {
+		sendTextMessage("Alô mundo");
 	}
 }
