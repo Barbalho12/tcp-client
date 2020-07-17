@@ -56,7 +56,6 @@ public class ClientHandler implements IoHandler {
 			default:
 				System.err.println("FRAME INVÁLIDO");
 		}	
-
 	}
 
 	@Override

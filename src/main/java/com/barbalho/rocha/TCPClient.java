@@ -97,13 +97,18 @@ public class TCPClient {
 		tcpSend(createMessage(fuse.getBytes(), Protocol.TIME_FRAME));
 	}
 
-	public static void main(String[] args) {
-		// sendTextMessage("cabeça de dragão");
+	public static void main(String[] args) throws InterruptedException {
+		
+		sendTextMessage("cabeça de dragão");
+
+		// Thread.sleep(3000);
 
 		// User user = new User(14, 59, 165, "Marcos");
 		// sendUserMessage(user);
 
-		requestDatetime("America/Sao_Paulo");
+		// Thread.sleep(3000);
+
+		// requestDatetime("America/Sao_Paulo");
 
 	}
 }
