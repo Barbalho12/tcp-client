@@ -38,9 +38,9 @@ public class TCPClient {
 		System.out.println(hexToASCII(ASCIIToHex(s)));
 	}
 
-	public static byte[] createMessage(String textMessage, byte frame) {
+	public static byte[] createMessage(byte[] textMessage, byte frame) {
 
-		byte[] byteMessage = new byte[textMessage.length() + 5];
+		byte[] byteMessage = new byte[textMessage.length + 5];
 
 		byteMessage[Protocol.INIT] = Protocol.INIT_VALUE;
 		byteMessage[Protocol.BYTES] = (byte) byteMessage.length;
@@ -48,8 +48,8 @@ public class TCPClient {
 
 		int index = Protocol.START_DATA;
 
-		for (int i = 0; i < textMessage.length(); i++) {
-			byteMessage[index++] = (byte) textMessage.charAt(i);
+		for (int i = 0; i < textMessage.length; i++) {
+			byteMessage[index++] = (byte) textMessage[i];
 		}
 
 		byte[] subMessage = Arrays.copyOfRange(byteMessage, 3, index);
@@ -85,11 +85,18 @@ public class TCPClient {
 	}
 
 	public static void sendTextMessage(String message) {
-		tcpSend(createMessage(message, Protocol.TEXT_FRAME));
+		tcpSend(createMessage(message.getBytes(), Protocol.TEXT_FRAME));
+	}
+
+	public static void sendUserMessage(User user) {
+		tcpSend(createMessage(user.getBytes(), Protocol.USER_FRAME));
 	}
 
 	public static void main(String[] args) {
-		String ascii = "cabeça de dragão";
-		sendTextMessage(ascii);
+		// sendTextMessage("cabeça de dragão");
+
+		User user = new User(14, 59, 165, "Marcos");
+		sendUserMessage(user);
+
 	}
 }

@@ -30,13 +30,13 @@ public class ClientHandler implements IoHandler {
 	@Override
 	public void messageReceived(IoSession session, Object message) {
 		LOG.info("client get message => " + message.toString());
-		System.out.println("client get message => " + message.toString());
+		// System.out.println("client get message => " + message.toString());
 	}
 
 	@Override
 	public void messageSent(IoSession session, Object message) {
 		LOG.info("client send message: " + message.toString());
-		System.out.println("client send message: " + message.toString());
+		// System.out.println("client send message: " + message.toString());
 	}
 
 	@Override
