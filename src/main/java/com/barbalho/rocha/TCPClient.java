@@ -2,7 +2,6 @@ package com.barbalho.rocha;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 
@@ -13,23 +12,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class TCPClient {
+	
 	static final private Logger LOG = LoggerFactory.getLogger(TCPClient.class);
 
 	public static final String IP_SERVER = "localhost";
 	public static final int PORT_SERVER = 9999;
-
-	public static final int INIT = 0;
-	public static final int BYTES = 1;
-	public static final int FRAME = 2;
-	public static final int START_DATA = 3;
-
-	public static final byte INIT_VALUE = 0x0A;
-	public static final byte END_VALUE = 0x0D;
-
-	public static final byte TEXT_FRAME = (byte) 0xA1;
-	public static final byte USER_FRAME = (byte) 0xA2;
-	public static final byte TIME_FRAME = (byte) 0xA3;
-	public static final byte ACK_FRAME = (byte) 0xA0;
 
 	public void testConversion() {
 		byte[] array = { 0x09, 0x01, 0x31, 0x32, 0x33, 0x34 };
@@ -37,7 +24,7 @@ public class TCPClient {
 	}
 
 	public static String hexToASCII(byte[] array) {
-		return new String(array, StandardCharsets.UTF_8);
+		return new String(array);
 	}
 
 	public static byte[] ASCIIToHex(String ascii) {
@@ -55,11 +42,11 @@ public class TCPClient {
 
 		byte[] byteMessage = new byte[textMessage.length() + 5];
 
-		byteMessage[INIT] = INIT_VALUE;
-		byteMessage[BYTES] = (byte) byteMessage.length;
-		byteMessage[FRAME] = frame;
+		byteMessage[Protocol.INIT] = Protocol.INIT_VALUE;
+		byteMessage[Protocol.BYTES] = (byte) byteMessage.length;
+		byteMessage[Protocol.FRAME] = frame;
 
-		int index = START_DATA;
+		int index = Protocol.START_DATA;
 
 		for (int i = 0; i < textMessage.length(); i++) {
 			byteMessage[index++] = (byte) textMessage.charAt(i);
@@ -68,7 +55,7 @@ public class TCPClient {
 		byte[] subMessage = Arrays.copyOfRange(byteMessage, 3, index);
 
 		byteMessage[index++] = CRC8.calc(subMessage, subMessage.length);
-		byteMessage[index++] = END_VALUE;
+		byteMessage[index++] = Protocol.END_VALUE;
 
 		return byteMessage;
 	}
@@ -77,19 +64,18 @@ public class TCPClient {
 
 		final NioTcpClient client = new NioTcpClient();
 		client.setIoHandler(new ClientHandler());
+	
 
 		try {
 
 			IoFuture<IoSession> future = client.connect(new InetSocketAddress(IP_SERVER, PORT_SERVER));
-
+			client.setConnectTimeoutMillis(3000);
 			try {
 				IoSession session = future.get();
 				LOG.info("session connected : {" + session + "}");
-
 				ByteBuffer encode = ByteBuffer.wrap(message);
-
 				session.write(encode);
-
+				Thread.sleep(1000);
 			} catch (ExecutionException e) {
 				LOG.error("cannot connect : ", e);
 			}
@@ -99,11 +85,11 @@ public class TCPClient {
 	}
 
 	public static void sendTextMessage(String message) {
-
-		tcpSend(createMessage(message, TEXT_FRAME));
+		tcpSend(createMessage(message, Protocol.TEXT_FRAME));
 	}
 
 	public static void main(String[] args) {
-		sendTextMessage("Alô mundo");
+		String ascii = "cabeça de dragão";
+		sendTextMessage(ascii);
 	}
 }
