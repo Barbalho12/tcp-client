@@ -7,6 +7,7 @@ import java.util.concurrent.ExecutionException;
 
 import org.apache.mina.api.IoFuture;
 import org.apache.mina.api.IoSession;
+import org.apache.mina.filter.logging.LoggingFilter;
 import org.apache.mina.transport.nio.NioTcpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,7 +65,7 @@ public class TCPClient {
 
 		final NioTcpClient client = new NioTcpClient();
 		client.setIoHandler(new ClientHandler());
-	
+		client.setFilters(new LoggingFilter("Client Filter"));
 
 		try {
 
@@ -92,11 +93,17 @@ public class TCPClient {
 		tcpSend(createMessage(user.getBytes(), Protocol.USER_FRAME));
 	}
 
+	public static void requestDatetime(String fuse) {
+		tcpSend(createMessage(fuse.getBytes(), Protocol.TIME_FRAME));
+	}
+
 	public static void main(String[] args) {
 		// sendTextMessage("cabeça de dragão");
 
-		User user = new User(14, 59, 165, "Marcos");
-		sendUserMessage(user);
+		// User user = new User(14, 59, 165, "Marcos");
+		// sendUserMessage(user);
+
+		requestDatetime("America/Sao_Paulo");
 
 	}
 }
