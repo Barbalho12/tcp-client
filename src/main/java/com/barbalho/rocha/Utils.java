@@ -9,6 +9,8 @@ import org.json.simple.parser.ParseException;
 
 public class Utils {
 
+	public static String LOCAL_DATE_ZONE = "America/Sao_Paulo";
+
     public static User readUserFromJson(String file) throws IOException, ParseException {
         JSONParser jsonParser = new JSONParser();
         try (FileReader reader = new FileReader(file)) {

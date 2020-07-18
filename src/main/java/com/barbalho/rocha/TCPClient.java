@@ -21,16 +21,18 @@ public class TCPClient {
 
 		final NioTcpClient client = new NioTcpClient();
 		client.setIoHandler(new ClientHandler());
+		client.setConnectTimeoutMillis(3000);
 		try {
 			final IoFuture<IoSession> future = client.connect(new InetSocketAddress(IP_SERVER, PORT_SERVER));
 			try {
 				final IoSession session = future.get();
 				final ByteBuffer encode = ByteBuffer.wrap(message);
-				session.write(encode);
-
+				
 				FrameMessage frameMessage = new FrameMessage(message);
 				LogFile.log("client send: [ " + frameMessage.toString() + " ]");
 				
+				session.write(encode);
+
 			} catch (final ExecutionException e) {
 				LOG.error("cannot connect : ", e);
 			}
@@ -73,10 +75,6 @@ public class TCPClient {
 								String filePath = args[3];
 								final User user = Utils.readUserFromJson(filePath);
 								sendUserMessage(user);
-								Thread.sleep(2000);
-							} else {
-								requestDatetime("America/Sao_Paulo");
-								Thread.sleep(2000);
 							}
 
 						} else if (frame.equals("-texto")) {
@@ -84,21 +82,16 @@ public class TCPClient {
 							if (args.length > 3) {
 								String texto = args[3];
 								sendTextMessage(texto);
-								Thread.sleep(2000);
-							} else {
-								requestDatetime("America/Sao_Paulo");
-								Thread.sleep(2000);
-							}
+							} 
 
 						} else if (frame.equals("-datetime")) {
 
 							if (args.length > 3) {
 								String zone = args[3];
 								requestDatetime(zone);
-								Thread.sleep(2000);
+								Utils.LOCAL_DATE_ZONE = zone;
 							} else {
-								requestDatetime("America/Sao_Paulo");
-								Thread.sleep(2000);
+								requestDatetime(Utils.LOCAL_DATE_ZONE);
 							}
 
 						} else {
