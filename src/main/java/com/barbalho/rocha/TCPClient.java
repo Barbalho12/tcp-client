@@ -9,7 +9,6 @@ import java.util.concurrent.ExecutionException;
 
 import org.apache.mina.api.IoFuture;
 import org.apache.mina.api.IoSession;
-import org.apache.mina.filter.logging.LoggingFilter;
 import org.apache.mina.transport.nio.NioTcpClient;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
