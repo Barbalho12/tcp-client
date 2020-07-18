@@ -1,5 +1,7 @@
 package com.barbalho.rocha;
 
+import java.io.FileReader;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -9,39 +11,42 @@ import org.apache.mina.api.IoFuture;
 import org.apache.mina.api.IoSession;
 import org.apache.mina.filter.logging.LoggingFilter;
 import org.apache.mina.transport.nio.NioTcpClient;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class TCPClient {
-	
+
 	static final private Logger LOG = LoggerFactory.getLogger(TCPClient.class);
 
-	public static final String IP_SERVER = "localhost";
-	public static final int PORT_SERVER = 9999;
+	public static String IP_SERVER = "localhost";
+	public static int PORT_SERVER = 9999;
 
 	public void testConversion() {
-		byte[] array = { 0x09, 0x01, 0x31, 0x32, 0x33, 0x34 };
+		final byte[] array = { 0x09, 0x01, 0x31, 0x32, 0x33, 0x34 };
 		System.out.println(String.format("0x%02X", CRC8.calc(array, 6)));
 	}
 
-	public static String hexToASCII(byte[] array) {
+	public static String hexToASCII(final byte[] array) {
 		return new String(array);
 	}
 
-	public static byte[] ASCIIToHex(String ascii) {
+	public static byte[] ASCIIToHex(final String ascii) {
 		return ascii.getBytes();
 	}
 
 	public static void teste() {
-		byte[] array = { 0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x20, 0x57, 0x6F, 0x72, 0x6C, 0x64 };
-		String s = "Hello World";
+		final byte[] array = { 0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x20, 0x57, 0x6F, 0x72, 0x6C, 0x64 };
+		final String s = "Hello World";
 		System.out.println(hexToASCII(array));
 		System.out.println(hexToASCII(ASCIIToHex(s)));
 	}
 
-	public static byte[] createMessage(byte[] textMessage, byte frame) {
+	public static byte[] createMessage(final byte[] textMessage, final byte frame) {
 
-		byte[] byteMessage = new byte[textMessage.length + 5];
+		final byte[] byteMessage = new byte[textMessage.length + 5];
 
 		byteMessage[Protocol.INIT] = Protocol.INIT_VALUE;
 		byteMessage[Protocol.BYTES] = (byte) byteMessage.length;
@@ -53,7 +58,7 @@ public class TCPClient {
 			byteMessage[index++] = (byte) textMessage[i];
 		}
 
-		byte[] subMessage = Arrays.copyOfRange(byteMessage, 1, index);
+		final byte[] subMessage = Arrays.copyOfRange(byteMessage, 1, index);
 
 		byteMessage[index++] = CRC8.calc(subMessage, subMessage.length);
 		byteMessage[index++] = Protocol.END_VALUE;
@@ -61,55 +66,104 @@ public class TCPClient {
 		return byteMessage;
 	}
 
-	public static void tcpSend(byte[] message) {
+	public static NioTcpClient tcpSend(final byte[] message) {
 
 		final NioTcpClient client = new NioTcpClient();
 		client.setIoHandler(new ClientHandler());
-		client.setFilters(new LoggingFilter("Client Filter"));
+		try {
+			final IoFuture<IoSession> future = client.connect(new InetSocketAddress(IP_SERVER, PORT_SERVER));
+			try {
+				final IoSession session = future.get();
+				final ByteBuffer encode = ByteBuffer.wrap(message);
+				session.write(encode);
+			} catch (final ExecutionException e) {
+				LOG.error("cannot connect : ", e);
+			}
+		} catch (final InterruptedException e) {
+			e.printStackTrace();
+		}
+		return client;
+	}
+
+	public static NioTcpClient sendTextMessage(final String message) {
+		return tcpSend(createMessage(message.getBytes(), Protocol.TEXT_FRAME));
+	}
+
+	public static NioTcpClient sendUserMessage(final User user) {
+		return tcpSend(createMessage(user.getBytes(), Protocol.USER_FRAME));
+	}
+
+	public static NioTcpClient requestDatetime(final String fuse) {
+		return tcpSend(createMessage(fuse.getBytes(), Protocol.TIME_FRAME));
+	}
+
+	public static void main(final String[] args) {
 
 		try {
 
-			IoFuture<IoSession> future = client.connect(new InetSocketAddress(IP_SERVER, PORT_SERVER));
-			client.setConnectTimeoutMillis(3000);
-			try {
-				IoSession session = future.get();
-				LOG.info("session connected : {" + session + "}");
-				ByteBuffer encode = ByteBuffer.wrap(message);
-				session.write(message);
-				session.write(encode);
-				Thread.sleep(1000);
-			} catch (ExecutionException e) {
-				LOG.error("cannot connect : ", e);
+			if (args.length > 0) {
+				IP_SERVER = args[0];
+				if (args.length > 1) {
+					PORT_SERVER = Integer.valueOf(args[1]);
+					if (args.length > 2) {
+						String frame = args[2];
+						if (frame.equals("-cliente")) {
+							if (args.length > 3) {
+								String filePath = args[3];
+								final User user = getFromJson(filePath);
+								sendUserMessage(user);
+								Thread.sleep(2000);
+							} else {
+								requestDatetime("America/Sao_Paulo");
+								Thread.sleep(2000);
+							}
+						} else if (frame.equals("-texto")) {
+							if (args.length > 3) {
+								String texto = args[3];
+								sendTextMessage(texto);
+								Thread.sleep(2000);
+							} else {
+								requestDatetime("America/Sao_Paulo");
+								Thread.sleep(2000);
+							}
+						} else if (frame.equals("-datetime")) {
+							if (args.length > 3) {
+								String zone = args[3];
+								requestDatetime(zone);
+								Thread.sleep(2000);
+							} else {
+								requestDatetime("America/Sao_Paulo");
+								Thread.sleep(2000);
+							}
+						} else {
+							throw new Exception("Caminho inválido");
+						}
+					}else{
+
+					}
+				}
 			}
-		} catch (InterruptedException e) {
-			e.printStackTrace();
+
+		} catch (Exception exception) {
+			LOG.error("Erro na execução do cliente", exception);
 		}
+
 	}
 
-	public static void sendTextMessage(String message) {
-		tcpSend(createMessage(message.getBytes(), Protocol.TEXT_FRAME));
-	}
+	public static User getFromJson(String file) throws IOException, ParseException {
+        JSONParser jsonParser = new JSONParser();
+        try (FileReader reader = new FileReader(file)) {
+			JSONObject obj = (JSONObject) jsonParser.parse(reader);
+			
+			int idade = Integer.valueOf(obj.get("idade").toString());
+			int peso = Integer.valueOf(obj.get("peso").toString());
+			int altura = Integer.valueOf( obj.get("altura").toString());
+			String nome = obj.get("nome").toString();
 
-	public static void sendUserMessage(User user) {
-		tcpSend(createMessage(user.getBytes(), Protocol.USER_FRAME));
-	}
-
-	public static void requestDatetime(String fuse) {
-		tcpSend(createMessage(fuse.getBytes(), Protocol.TIME_FRAME));
-	}
-
-	public static void main(String[] args) throws InterruptedException {
-		
-		sendTextMessage("cabeça de dragão");
-
-		Thread.sleep(8000);
-
-		User user = new User(14, 59, 165, "Marcos");
-		sendUserMessage(user);
-
-		Thread.sleep(8000);
-
-		requestDatetime("America/Sao_Paulo");
-
+			User user = new User(idade, peso, altura, nome);
+			 
+            return user;
+ 
+        }
 	}
 }

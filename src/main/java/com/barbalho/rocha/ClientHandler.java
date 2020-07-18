@@ -16,17 +16,16 @@ public class ClientHandler implements IoHandler {
 
 	@Override
 	public void sessionOpened(IoSession session) {
-		LOG.info("session opened {" + session + "}");
+		// LOG.info("session opened {" + session + "}");
 	}
 
 	@Override
 	public void sessionClosed(IoSession session) {
-		LOG.info("client :" + session.getRemoteAddress().toString() + " close connection");
+		// LOG.info("client :" + session.getRemoteAddress().toString() + " close connection");
 	}
 
 	@Override
 	public void sessionIdle(IoSession session, IdleStatus status) {
-		// TODO Auto-generated method stub
 
 	}
 
@@ -57,14 +56,10 @@ public class ClientHandler implements IoHandler {
 
 	@Override
 	public void messageReceived(IoSession session, Object message) {
-		LOG.info("client get message => " + message.toString());
-		LOG.info("client :" + message);
-
 		if (message instanceof ByteBuffer) {
 			try {
-
 				ByteBuffer b = (ByteBuffer) message;
-
+				
 				byte init = b.get();
 				int bytes = b.get();
 				byte frame = b.get();
@@ -75,42 +70,45 @@ public class ClientHandler implements IoHandler {
 				byte crc = b.get();
 				byte end = b.get();
 
-				System.out.println("INIT: " + String.format("0x%02X", init));
-				System.out.println("BYTES: " + String.format("0x%02X", bytes) + " = " + ((int) bytes));
-				System.out.println("FRAME: " + String.format("0x%02X", frame));
-				
+				log(init, bytes, frame, messageBytes, crc, end);
+
 				showResponse(frame, messageBytes);
 
-				System.out.println("CRC: " + String.format("0x%02X", crc));
-				System.out.println("END: " + String.format("0x%02X", end));
-				
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
 	}
 
+	public static void log(byte init, int bytes, byte frame, byte[] messageBytes, byte crc, byte end ){
+		String show = String.format("0x%02X", init);
+		show += String.format(" 0x%02X", bytes);
+		show += String.format(" 0x%02X", frame);
+		for(int i = 0; i < messageBytes.length; i++){
+			show += String.format(" 0x%02X", messageBytes[i]);
+		}
+		show += String.format(" 0x%02X", crc);
+		show += String.format(" 0x%02X", end);
+		System.out.println("client receive: [ " + show + " ]");
+	}
+
 	@Override
 	public void messageSent(IoSession session, Object message) {
-		LOG.info("client send message: " + message.toString());
-		// System.out.println("client send message: " + message.toString());
+		System.out.println("client send message: " + message.toString());
 	}
 
 	@Override
 	public void serviceActivated(IoService service) {
-		// TODO Auto-generated method stub
 
 	}
 
 	@Override
 	public void serviceInactivated(IoService service) {
-		// TODO Auto-generated method stub
 
 	}
 
 	@Override
 	public void exceptionCaught(IoSession session, Exception cause) {
-		// TODO Auto-generated method stub
 
 	}
 
