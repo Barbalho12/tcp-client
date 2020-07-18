@@ -44,3 +44,4 @@ pom.xml.releaseBackup
 pom.xml.tag
 .vscode/launch.json
 .vscode/*
+CLIENT_LOG.txt
