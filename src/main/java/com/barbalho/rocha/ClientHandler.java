@@ -31,16 +31,13 @@ public class ClientHandler implements IoHandler {
 	}
 
 	public Date getDateTime(byte [] bytes){
-
 		int year = (int) bytes[0];
 		int month = (int) bytes[1];  
 		int day = (int) bytes[2];
 		int hour = (int) bytes[3]; 
 		int minute = (int) bytes[4]; 
 		int second = (int) bytes[5];
-
 		Date date = new Date(year, month, day, hour, minute, second);
-	
 		return date;
 	}
 
@@ -82,16 +79,11 @@ public class ClientHandler implements IoHandler {
 				System.out.println("BYTES: " + String.format("0x%02X", bytes) + " = " + ((int) bytes));
 				System.out.println("FRAME: " + String.format("0x%02X", frame));
 				
-				
-				// System.out.println("DATA: " + new String(messageBytes, StandardCharsets.ISO_8859_1));
-				// byte [] response = saveData(frame, messageBytes);
 				showResponse(frame, messageBytes);
-
 
 				System.out.println("CRC: " + String.format("0x%02X", crc));
 				System.out.println("END: " + String.format("0x%02X", end));
 				
-
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

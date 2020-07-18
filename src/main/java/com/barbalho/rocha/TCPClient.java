@@ -53,7 +53,7 @@ public class TCPClient {
 			byteMessage[index++] = (byte) textMessage[i];
 		}
 
-		byte[] subMessage = Arrays.copyOfRange(byteMessage, 3, index);
+		byte[] subMessage = Arrays.copyOfRange(byteMessage, 1, index);
 
 		byteMessage[index++] = CRC8.calc(subMessage, subMessage.length);
 		byteMessage[index++] = Protocol.END_VALUE;
@@ -75,6 +75,7 @@ public class TCPClient {
 				IoSession session = future.get();
 				LOG.info("session connected : {" + session + "}");
 				ByteBuffer encode = ByteBuffer.wrap(message);
+				session.write(message);
 				session.write(encode);
 				Thread.sleep(1000);
 			} catch (ExecutionException e) {
@@ -101,14 +102,14 @@ public class TCPClient {
 		
 		sendTextMessage("cabeça de dragão");
 
-		// Thread.sleep(3000);
+		Thread.sleep(8000);
 
-		// User user = new User(14, 59, 165, "Marcos");
-		// sendUserMessage(user);
+		User user = new User(14, 59, 165, "Marcos");
+		sendUserMessage(user);
 
-		// Thread.sleep(3000);
+		Thread.sleep(8000);
 
-		// requestDatetime("America/Sao_Paulo");
+		requestDatetime("America/Sao_Paulo");
 
 	}
 }
